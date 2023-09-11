@@ -2,7 +2,7 @@ import java.util.List;
 
 public interface AlbumDao {
 
-	void persist(Album a);
+	void persist(Album a) throws InvalidAlbumException;
 
 	Album findByTitle(String title) throws InvalidAlbumException;
 

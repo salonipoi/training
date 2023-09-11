@@ -1,9 +1,7 @@
 public class InvalidAlbumException extends Exception {
+	public InvalidAlbumException(String message) {
+		super(message);
 
-    public InvalidAlbumException(String message) {
-
-        super(message);
-
-    }
+	}
 
 }

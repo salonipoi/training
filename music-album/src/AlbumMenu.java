@@ -1,175 +1,132 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.List;
-
+import java.util.Optional;
 import java.util.Scanner;
 
 public class AlbumMenu {
+	private static AlbumDaoImpl dao;
+	static {
+		try {
+			dao = new AlbumDaoImpl();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
-	public static void main(String[] args) {
-		AlbumDao albumDao = new AlbumDaoImpl();// Create an instance of the AlbumDao implementation
-		Scanner scanner = new Scanner(System.in);// Create a scanner for user input
+	public static void main(String[] args) throws InvalidAlbumException {
+		Scanner sc = new Scanner(System.in);
 		while (true) {
-			System.out.println("\nChoose an operation:");
-			System.out.println("1. Add an album");
-			System.out.println("2. List all albums");
-			System.out.println("3. Find album by title");
-			System.out.println("4. Find albums by artist");
-			System.out.println("5. Find albums by genre");
-			System.out.println("6. Update an album");
-			System.out.println("7. Delete an album");
-			System.out.println("8. Exit");
-
-			int choice = scanner.nextInt();
-			scanner.nextLine(); // Consume newline
+			System.out.println("Main Menu");
+			System.out.println(
+					"1- Add \n2- Find by Title\n3- List\n4- Find by Artist\n5- Find by Genre\n6- Update\n7- Delete");
+			System.out.println("Enter Choice");
+			int choice = sc.nextInt();
 			switch (choice) {
+
 			case 1:
-				// Input album details and persist
-				try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/albums.txt"))) {
-					Scanner scanner1 = new Scanner(System.in);
-
-					System.out.println("Enter album details:");
-					System.out.print("Title: ");
-					String title = scanner1.nextLine();
-					writer.write(title);
-
-					System.out.print("Artist: ");
-					String artist = scanner1.nextLine();
-					writer.write("," + artist);
-
-					System.out.print("Genre: ");
-					String genre = scanner1.nextLine();
-					writer.write("," + genre);
-
-					Album newAlbum = new Album(title, artist, genre);
-					albumDao.persist(newAlbum);
-					System.out.println("Album added successfully.");
-				} catch (IOException e) {
-					System.err.println("Error writing to file: " + e.getMessage());
-				}
-
+				addpersist();
 				break;
-
 			case 2:
-				// List all albums
-				System.out.println("\nAll Albums:");
-				String path = "src/albums.txt";
-				BufferedReader reader = null;
-				String line = null;
-
-				try {
-					FileReader fr = new FileReader(path); // opening file stream
-					reader = new BufferedReader(fr); // Wrapping buffer around it
-
-					while (true) {
-						line = reader.readLine(); // Reads a line from buffer
-						if (line == null) // EOF
-							break;
-						System.out.println(line);
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} finally {
-					try {
-						if (reader != null)
-							reader.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-					List<Album> allAlbums = albumDao.list();
-					for (Album album : allAlbums) {
-						System.out.println(album);
-					}
-				}
+				findbytitle();
 				break;
-
 			case 3:
-				// Find an album by title
-				System.out.print("Enter title to find an album: ");
-				String findTitle = scanner.nextLine();
-				try {
-					Album foundAlbum = albumDao.findByTitle(findTitle);
-					System.out.println("Found Album: " + foundAlbum);
-				} catch (InvalidAlbumException e) {
-					System.err.println(e.getMessage());
-				}
-
+				list();
 				break;
-
 			case 4:
-				// Find albums by artist
-				System.out.print("Enter artist to find albums: ");
-				String findArtist = scanner.nextLine();
-				List<Album> albumsByArtist = albumDao.findByArtist(findArtist);
-				System.out.println("Albums by " + findArtist + ":");
-				for (Album album : albumsByArtist) {
-					System.out.println(album);
-				}
-				break;
+				findbyartist();
+				break; 
 			case 5:
-				// Find albums by genre
-				System.out.print("Enter genre to find albums: ");
-				String findGenre = scanner.nextLine();
-				List<Album> albumsByGenre = albumDao.findByGenre(findGenre);
-				System.out.println("Albums in " + findGenre + " genre:");
-				for (Album album : albumsByGenre) {
-					System.out.println(album);
-				}
+				findbygenre();
 				break;
 			case 6:
-				// Update an album
-				System.out.print("Enter title of the album to update: ");
-				String updateTitle = scanner.nextLine();
-
-				System.out.print("Updated Title: ");
-				String updatedTitle = scanner.nextLine();
-				System.out.print("Updated Artist: ");
-				String updatedArtist = scanner.nextLine();
-				System.out.print("Updated Genre: ");
-				String updatedGenre = scanner.nextLine();
-				Album updatedAlbum = new Album(updatedTitle, updatedArtist, updatedGenre);
-				boolean isUpdated = albumDao.update(updatedAlbum);
-				if (isUpdated) {
-					System.out.println("Album updated successfully.");
-				} else {
-					System.out.println("Album not found for update.");
-				}
-
+				update();
 				break;
-
 			case 7:
-				// Delete an album by title
-				System.out.print("Enter title to delete an album: ");
-				String deleteTitle = scanner.nextLine();
-
-				try {
-
-					boolean isDeleted = albumDao.delete(deleteTitle);
-					if (isDeleted) {
-						System.out.println("Album deleted successfully.");
-					} else {
-						System.out.println("Album not found for deletion.");
-					}
-
-				} catch (InvalidAlbumException e) {
-					System.err.println(e.getMessage());
-				}
-
+				delete();
 				break;
-
-			case 8:
-				// Exit the program
-
-				System.out.println("Exiting the program.");
-				scanner.close();
-				System.exit(0);
-			default:
-				System.out.println("Invalid choice. Please choose a valid option.");
 			}
 		}
+	}
+
+	private static void list() {
+		dao.list().forEach(System.out::println);
+	}
+
+	private static void delete() throws InvalidAlbumException {
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter Album to Delete: ");
+		String delete = sc.next();
+		System.out.println(dao.delete(delete));
+	}
+
+	//private static void update() {
+		// Scanner sc = new Scanner(System.in);
+		// System.out.println("Update Existing Albums: ");
+		// String update = sc.next();
+		// Album a = new Album(update);
+		// dao.update(a);
+		
+		
+
+		private static void update() {
+		    Scanner scanner = new Scanner(System.in);
+		    System.out.print("Enter album title to update: ");
+		    String u_Title = scanner.nextLine();
+		    try {
+		        Album foundAlbum = dao.findByTitle(u_Title);
+		        System.out.print("Enter new artist (or press Enter to keep current artist name): ");
+		        String n_Artist = scanner.nextLine();
+		        System.out.print("Enter new genre (or press Enter to keep current genre name): ");
+		        String n_Genre = scanner.nextLine();		
+		        // Check if either artist or genre needs to be update
+		        if (!n_Artist.isEmpty() || !n_Genre.isEmpty()) {
+		            if (!n_Artist.isEmpty()) {
+		                foundAlbum.setArtist(n_Artist);
+		            }
+		            if (!n_Genre.isEmpty()) {
+		                foundAlbum.setGenre(n_Genre);
+		            }		 
+		            dao.update(foundAlbum);
+		            System.out.println("Album updated successfully!!!");
+		        } 
+		        else {
+		            System.out.println("No changes made to the album.");
+		        }
+		    } catch (InvalidAlbumException e) {
+		        System.out.println(e.getMessage());
+		    }
+		}
+	
+	
+	private static void findbygenre() {
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter Genre: ");
+		String genre = sc.next();
+		System.out.println(dao.findByGenre(genre));
+	}
+
+	private static void findbyartist() {
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter Artist: ");
+		String artist = sc.next();
+		System.out.println(dao.findByArtist(artist));
+	}
+
+	private static void findbytitle() throws InvalidAlbumException {
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter Title: ");
+		String title = sc.nextLine();
+		System.out.println(dao.findByTitle(title));
+	}
+
+	private static void addpersist() throws InvalidAlbumException {
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter Title: ");
+		String title = sc.next();
+		System.out.println("Enter Artist: ");
+		String artist = sc.next();
+		System.out.println("Enter Genre: ");
+		String genre = sc.next();
+		Album a = new Album(title, artist, genre);
+
+		dao.persist(a);
 	}
 }
